@@ -1,0 +1,4 @@
+interface:
+  display_name: "Symgrep"
+  short_description: "AST-based symbol discovery and extraction for code files"
+  default_prompt: "Use symgrep list to discover symbols, then symgrep extract for precise symbol-level reads."

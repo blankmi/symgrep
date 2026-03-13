@@ -1,0 +1,19 @@
+# Binaries
+bin/
+
+# Go test cache and build artifacts
+*.test
+*.out
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+
+# Temporary directories
+.tmp-skill-install/
+
+
+# Local settings
+.claude
