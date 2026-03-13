@@ -29,14 +29,17 @@ jobs:
         include:
           - os: ubuntu-latest
             make_target: build-linux-amd64
+            make_args: ""
             artifact_name: symgrep-linux-amd64
             artifact_path: bin/symgrep-linux-amd64
           - os: macos-latest
             make_target: build-darwin-amd64
+            make_args: DARWIN_AMD64_CC=clang
             artifact_name: symgrep-darwin-amd64
             artifact_path: bin/symgrep-darwin-amd64
           - os: macos-latest
             make_target: build-darwin-arm64
+            make_args: DARWIN_ARM64_CC=clang
             artifact_name: symgrep-darwin-arm64
             artifact_path: bin/symgrep-darwin-arm64
     runs-on: ${{ matrix.os }}
@@ -51,6 +54,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Zig
+        if: matrix.make_target == 'build-linux-amd64'
         uses: mlugg/setup-zig@v2
         with:
           version: 0.15.2
@@ -62,7 +66,7 @@ jobs:
           echo "LIBRARY_PATH=" >> "$GITHUB_ENV"
 
       - name: Build Binary
-        run: make ${{ matrix.make_target }}
+        run: make ${{ matrix.make_target }} ${{ matrix.make_args }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
