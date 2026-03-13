@@ -22,10 +22,12 @@ build-linux-amd64:
 	mkdir -p $(BIN_DIR)
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC="zig cc -target x86_64-linux" go build -o $(BIN_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PKG)
 
+MACOS_SDK := $(shell xcrun --show-sdk-path 2>/dev/null)
+
 build-darwin-amd64:
 	mkdir -p $(BIN_DIR)
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="zig cc -target x86_64-macos" go build -o $(BIN_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PKG)
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="zig cc -target x86_64-macos --sysroot=$(MACOS_SDK)" go build -o $(BIN_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PKG)
 
 build-darwin-arm64:
 	mkdir -p $(BIN_DIR)
-	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="zig cc -target aarch64-macos" go build -o $(BIN_DIR)/$(BINARY_NAME)-darwin-arm64 $(MAIN_PKG)
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="zig cc -target aarch64-macos --sysroot=$(MACOS_SDK)" go build -o $(BIN_DIR)/$(BINARY_NAME)-darwin-arm64 $(MAIN_PKG)
