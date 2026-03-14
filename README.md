@@ -29,6 +29,24 @@ make build
 # Binary will be available as ./bin/symgrep
 ```
 
+### Adding to PATH
+
+To use `symgrep` from any directory (and allow agents to invoke it without a relative path), add the binary to a directory in your `PATH`:
+
+```bash
+# Option 1: Copy the binary to a standard location
+cp ./bin/symgrep /usr/local/bin/
+
+# Option 2: Or add symgrep's bin directory to your PATH
+export PATH="$PATH:/path/to/symgrep/bin"
+# Add the line above to your ~/.zshrc or ~/.bashrc to make it permanent
+```
+
+Verify it works:
+```bash
+symgrep --help
+```
+
 *Note: For cross-compilation, the included Makefile uses `zig cc` to handle CGO dependencies easily.*
 
 ## Usage
@@ -113,6 +131,71 @@ Pre-built skill files for popular coding agents are in `agent-skills/`:
 | Claude Code | `agent-skills/claude-code/SKILL.md` | Copy into `CLAUDE.md` or reference via [custom instructions](https://docs.anthropic.com/en/docs/claude-code) |
 | Gemini | `agent-skills/gemini/gemini.skill` | `gemini skills install agent-skills/gemini/gemini.skill` |
 | Codex | `agent-skills/codex/SKILL.md` | Copy `agent-skills/codex` into `$CODEX_HOME/skills/symgrep` |
+
+### Ensuring agents actually use `symgrep`
+
+Installing the skill alone is not enough — agents will default to built-in tools (grep, glob, file reads) unless explicitly instructed otherwise. To make an agent reliably use `symgrep`, add the following instruction to the agent's config file in your project root:
+
+| Agent       | Config file                          |
+|-------------|--------------------------------------|
+| Claude Code | `CLAUDE.md`                          |
+| Gemini      | `GEMINI.md`                          |
+| Codex       | `AGENTS.md` or `AGENTS.override.md`  |
+
+```markdown
+When navigating to function, class, method, or struct definitions, ALWAYS use the `symgrep` skill instead of grep or reading entire files.
+Only fall back to grep/find when searching for exact string matches or file name patterns.
+```
+
+> [!NOTE]
+> Skills and referenced files are passive — agents may not follow them reliably. Instructions placed directly in the agent's config file are loaded into the agent's context automatically and have the strongest influence on tool selection behavior.
+
+### Allowlisting `symgrep` for autonomous use
+
+By default, coding agents require user approval before running shell commands. To let an agent use `symgrep` without prompting each time, add it to the agent's permission allowlist.
+
+**Claude Code** — add to `.claude/settings.json` (project-level) or `~/.claude/settings.json` (global):
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(symgrep *)"
+    ]
+  }
+}
+```
+
+See the [Claude Code permissions docs](https://docs.anthropic.com/en/docs/claude-code/settings#permissions) for more details on permission rules and scoping.
+
+**Codex** — add to `~/.codex/rules/default.rules` (or project-level `.codex/rules/*.rules`):
+
+```python
+# Allow direct symgrep invocations outside the sandbox without approval prompts.
+prefix_rule(
+    pattern = ["symgrep"],
+    decision = "allow",
+)
+```
+
+See the [Codex rules docs](https://developers.openai.com/codex/rules) for rule syntax and scope details.
+
+**Gemini CLI** — add to `.gemini/policies/symgrep.toml` (project-level) or `~/.gemini/policies/symgrep.toml` (global):
+
+```toml
+# Allow skill activation without confirmation
+[[rule]]
+toolName = "activate_skill"
+decision = "allow"
+priority = 100
+
+# Allow symgrep command execution without confirmation
+[[rule]]
+toolName = "run_shell_command"
+commandPrefix = "symgrep"
+decision = "allow"
+priority = 100
+```
 
 ### Agent Workflow
 The intended two-step pattern for agents:

@@ -7,8 +7,6 @@ description: Semantic code search and symbol extraction using the local `symgrep
 
 Use `symgrep` for symbol-level navigation and targeted code extraction.
 
-Prefer `./symgrep` from the repository root. If unavailable in the current working directory, use `symgrep` from `PATH`.
-
 ## When To Use
 
 - You need to discover what symbols exist in a code file.
@@ -28,33 +26,33 @@ Prefer `./symgrep` from the repository root. If unavailable in the current worki
 
 ```bash
 # List all symbols in a file (tab-separated: type, name, line range)
-./symgrep list -f path/to/file.go
+symgrep list -f path/to/file.go
 
 # List as JSON (includes full source for each symbol)
-./symgrep list -f path/to/file.go --format=json
+symgrep list -f path/to/file.go --format=json
 
 # List only one symbol type
-./symgrep list -f path/to/file.go -t function
+symgrep list -f path/to/file.go -t function
 
 # List recursively across a directory
-./symgrep list -f path/to/dir/
+symgrep list -f path/to/dir/
 
 # Directory search narrowed by type and language
-./symgrep list -f path/to/dir/ -t function -l go
+symgrep list -f path/to/dir/ -t function -l go
 ```
 
 ```bash
 # Extract symbol source (raw code)
-./symgrep extract -f path/to/file.go -s FunctionName
+symgrep extract -f path/to/file.go -s FunctionName
 
 # Extract symbol as JSON with locations
-./symgrep extract -f path/to/file.go -s FunctionName --format=json
+symgrep extract -f path/to/file.go -s FunctionName --format=json
 
 # Extract recursively across a directory
-./symgrep extract -f path/to/dir/ -s FunctionName --format=json
+symgrep extract -f path/to/dir/ -s FunctionName --format=json
 
 # Directory search in raw mode returns each match grouped by file
-./symgrep extract -f path/to/dir/ -s FunctionName
+symgrep extract -f path/to/dir/ -s FunctionName
 ```
 
 ## Output Details
