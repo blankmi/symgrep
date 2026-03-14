@@ -195,7 +195,7 @@ func ExtractSymbolWithType(filePath, symbolName, langName, symbolType string) (*
 			}
 
 			matchedType := inferSymbolType(pf.langKey, &targetNode, nameNodePtr)
-			if normalizedSymbolType != "" && matchedType != normalizedSymbolType {
+			if normalizedSymbolType != "" && !symbolTypeMatches(normalizedSymbolType, matchedType) {
 				continue
 			}
 
@@ -270,7 +270,7 @@ func ListSymbols(filePath, langName, symbolType string) ([]SymbolInfo, error) {
 		}
 
 		matchedType := inferSymbolType(pf.langKey, &targetNode, &nameNode)
-		if normalizedSymbolType != "" && matchedType != normalizedSymbolType {
+		if normalizedSymbolType != "" && !symbolTypeMatches(normalizedSymbolType, matchedType) {
 			continue
 		}
 
@@ -314,6 +314,18 @@ func normalizeSymbolType(symbolType string) (string, error) {
 	}
 
 	return value, nil
+}
+
+// symbolTypeMatches reports whether matchedType satisfies the requested filter.
+// "function" matches both "function" and "method"; all other types require exact match.
+func symbolTypeMatches(filter, matchedType string) bool {
+	if filter == matchedType {
+		return true
+	}
+	if filter == "function" && matchedType == "method" {
+		return true
+	}
+	return false
 }
 
 func inferSymbolType(langKey string, targetNode, nameNode *sitter.Node) string {
