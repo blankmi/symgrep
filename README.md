@@ -14,6 +14,8 @@
   - JavaScript / TypeScript
   - Rust
   - C++
+  - XML / SVG
+  - HTML
 - **Agent-Optimized**: Output in `raw` code format for easy reading or `json` for structured data (includes line numbers and byte offsets).
 - **Single Binary**: Portable Go executable with embedded C-based grammars (requires CGO for building).
 
@@ -134,7 +136,11 @@ Pre-built skill files for popular coding agents are in `agent-skills/`:
 
 ### Ensuring agents actually use `symgrep`
 
-Installing the skill alone is not enough — agents will default to built-in tools (grep, glob, file reads) unless explicitly instructed otherwise. To make an agent reliably use `symgrep`, add the following instruction to the agent's config file in your project root:
+Installing the skill alone is not enough — agents will default to built-in tools (grep, glob, file reads) unless you either:
+1. add an explicit instruction to the agent's config, or
+2. directly tell the agent in your prompt to use `symgrep`.
+
+To make an agent reliably use `symgrep`, add the following instruction to the agent's config file in your project root:
 
 | Agent       | Config file                          |
 |-------------|--------------------------------------|
@@ -143,12 +149,22 @@ Installing the skill alone is not enough — agents will default to built-in too
 | Codex       | `AGENTS.md` or `AGENTS.override.md`  |
 
 ```markdown
-When navigating to function, class, method, or struct definitions, ALWAYS use the `symgrep` skill instead of grep or reading entire files.
-Only fall back to grep/find when searching for exact string matches or file name patterns.
+Use `symgrep` for symbol discovery and definition extraction. Never start with grep, glob, or full-file reads for symbol lookup when `symgrep` is available.
+1. Run `symgrep list -f <file> -s <symbol>` when the file is already known.
+2. Run `symgrep list -f <directory> -s <symbol>` when the symbol location is unknown and you need to search across files.
+3. Run `symgrep extract -f <file> -s <symbol>` after discovery to retrieve the exact definition.
+4. Prefer `--format=json` when line numbers, byte offsets, or machine-readable output are useful.
+5. Fall back to grep/find only for exact text, file/path discovery, comments, TODOs, log messages, or unsupported files. Read full files only when editing, checking nearby context after extraction, or when `symgrep` cannot answer the question.
 ```
 
 > [!NOTE]
 > Skills and referenced files are passive — agents may not follow them reliably. Instructions placed directly in the agent's config file are loaded into the agent's context automatically and have the strongest influence on tool selection behavior.
+
+#### Quick verification
+Ask the agent something like:
+- Where is handleRequest defined?
+- Show me the UserService.login method.
+- Find the Config struct used by the CLI.
 
 ### Allowlisting `symgrep` for autonomous use
 

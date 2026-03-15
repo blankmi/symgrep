@@ -4,9 +4,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	tree_sitter_xml "github.com/tree-sitter-grammars/tree-sitter-xml/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	tree_sitter_cpp "github.com/tree-sitter/tree-sitter-cpp/bindings/go"
 	tree_sitter_go "github.com/tree-sitter/tree-sitter-go/bindings/go"
+	tree_sitter_html "github.com/tree-sitter/tree-sitter-html/bindings/go"
 	tree_sitter_java "github.com/tree-sitter/tree-sitter-java/bindings/go"
 	tree_sitter_javascript "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
 	tree_sitter_python "github.com/tree-sitter/tree-sitter-python/bindings/go"
@@ -28,6 +30,10 @@ var extToLang = map[string]string{
 	".cxx":  "cpp",
 	".h":    "cpp",
 	".hpp":  "cpp",
+	".xml":  "xml",
+	".svg":  "xml",
+	".html": "html",
+	".htm":  "html",
 }
 
 var langAliases = map[string]string{
@@ -44,6 +50,10 @@ var langAliases = map[string]string{
 	"rs":         "rust",
 	"cpp":        "cpp",
 	"c++":        "cpp",
+	"xml":        "xml",
+	"svg":        "xml",
+	"html":       "html",
+	"htm":        "html",
 }
 
 func normalizeLanguageName(langName string) (string, bool) {
@@ -89,6 +99,10 @@ func GetLanguage(langName, filePath string) (*sitter.Language, string) {
 		return sitter.NewLanguage(tree_sitter_rust.Language()), "rust"
 	case "cpp":
 		return sitter.NewLanguage(tree_sitter_cpp.Language()), "cpp"
+	case "xml":
+		return sitter.NewLanguage(tree_sitter_xml.LanguageXML()), "xml"
+	case "html":
+		return sitter.NewLanguage(tree_sitter_html.Language()), "html"
 	default:
 		return nil, ""
 	}

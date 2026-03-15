@@ -127,6 +127,10 @@ func TestIsSupportedFile(t *testing.T) {
 		{path: "main.go", want: true},
 		{path: "script.py", want: true},
 		{path: "types.tsx", want: true},
+		{path: "page.html", want: true},
+		{path: "page.htm", want: true},
+		{path: "data.xml", want: true},
+		{path: "icon.svg", want: true},
 		{path: "readme.md", want: false},
 		{path: "noext", want: false},
 	}

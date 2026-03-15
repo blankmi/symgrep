@@ -240,6 +240,150 @@ func TestListSymbolsUnsupportedLanguage(t *testing.T) {
 	}
 }
 
+func TestHTMLExtractElement(t *testing.T) {
+	t.Parallel()
+
+	content := `<html>
+<body>
+  <div class="main"><p>Hello</p></div>
+</body>
+</html>
+`
+	filePath := writeTempFile(t, "test.html", content)
+
+	got, err := ExtractSymbol(filePath, "div", "")
+	if err != nil {
+		t.Fatalf("ExtractSymbol() error = %v", err)
+	}
+	if got.SymbolType != "element" {
+		t.Fatalf("got type %q, want %q", got.SymbolType, "element")
+	}
+	if !strings.Contains(got.Code, `<div class="main">`) {
+		t.Fatalf("got code %q, want it to contain <div>", got.Code)
+	}
+}
+
+func TestHTMLExtractScriptAndStyle(t *testing.T) {
+	t.Parallel()
+
+	content := `<html>
+<head>
+  <script>console.log("hi")</script>
+  <style>body { color: red; }</style>
+</head>
+</html>
+`
+	filePath := writeTempFile(t, "test_script.html", content)
+
+	script, err := ExtractSymbolWithType(filePath, "script", "", "script")
+	if err != nil {
+		t.Fatalf("extract script error = %v", err)
+	}
+	if script.SymbolType != "script" {
+		t.Fatalf("got type %q, want %q", script.SymbolType, "script")
+	}
+
+	style, err := ExtractSymbolWithType(filePath, "style", "", "style")
+	if err != nil {
+		t.Fatalf("extract style error = %v", err)
+	}
+	if style.SymbolType != "style" {
+		t.Fatalf("got type %q, want %q", style.SymbolType, "style")
+	}
+}
+
+func TestHTMLListElements(t *testing.T) {
+	t.Parallel()
+
+	content := `<html><body><div><p>Hi</p></div><img src="x" /></body></html>`
+	filePath := writeTempFile(t, "list.html", content)
+
+	symbols, err := ListSymbols(filePath, "html", "")
+	if err != nil {
+		t.Fatalf("ListSymbols() error = %v", err)
+	}
+
+	names := make(map[string]bool)
+	for _, s := range symbols {
+		names[s.Name] = true
+	}
+	for _, want := range []string{"html", "body", "div", "p", "img"} {
+		if !names[want] {
+			t.Fatalf("missing element %q in listed symbols", want)
+		}
+	}
+}
+
+func TestHTMLListWithTypeFilter(t *testing.T) {
+	t.Parallel()
+
+	content := `<html><head><script>var x=1</script><style>a{}</style></head><body><p>Hi</p></body></html>`
+	filePath := writeTempFile(t, "filter.html", content)
+
+	scripts, err := ListSymbols(filePath, "html", "script")
+	if err != nil {
+		t.Fatalf("ListSymbols(script) error = %v", err)
+	}
+	if len(scripts) != 1 || scripts[0].Name != "script" {
+		t.Fatalf("expected 1 script, got %d", len(scripts))
+	}
+
+	elements, err := ListSymbols(filePath, "html", "element")
+	if err != nil {
+		t.Fatalf("ListSymbols(element) error = %v", err)
+	}
+	for _, s := range elements {
+		if s.SymbolType != "element" {
+			t.Fatalf("expected element type, got %q", s.SymbolType)
+		}
+	}
+}
+
+func TestXMLExtractElement(t *testing.T) {
+	t.Parallel()
+
+	content := `<?xml version="1.0"?>
+<root>
+  <item id="1">Hello</item>
+  <nested><child>World</child></nested>
+</root>
+`
+	filePath := writeTempFile(t, "test.xml", content)
+
+	got, err := ExtractSymbol(filePath, "item", "")
+	if err != nil {
+		t.Fatalf("ExtractSymbol() error = %v", err)
+	}
+	if got.SymbolType != "element" {
+		t.Fatalf("got type %q, want %q", got.SymbolType, "element")
+	}
+	if !strings.Contains(got.Code, "Hello") {
+		t.Fatalf("got code %q, want it to contain 'Hello'", got.Code)
+	}
+}
+
+func TestXMLListElements(t *testing.T) {
+	t.Parallel()
+
+	content := `<root><a/><b>text</b></root>`
+	filePath := writeTempFile(t, "list.xml", content)
+
+	symbols, err := ListSymbols(filePath, "xml", "")
+	if err != nil {
+		t.Fatalf("ListSymbols() error = %v", err)
+	}
+
+	names := make(map[string]bool)
+	for _, s := range symbols {
+		names[s.Name] = true
+	}
+	for _, want := range []string{"root", "a", "b"} {
+		if !names[want] {
+			t.Fatalf("missing element %q in listed symbols", want)
+		}
+	}
+}
+
 func writeTempFile(t *testing.T, name, content string) string {
 	t.Helper()
 

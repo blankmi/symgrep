@@ -75,6 +75,20 @@ var queries = map[string]string{
 			(struct_specifier name: (type_identifier) @name)
 		] @symbol
 	`,
+	"xml": `
+		[
+			(element (STag (Name) @name))
+			(element (EmptyElemTag (Name) @name))
+		] @symbol
+	`,
+	"html": `
+		[
+			(element (start_tag (tag_name) @name))
+			(script_element (start_tag (tag_name) @name))
+			(style_element (start_tag (tag_name) @name))
+			(self_closing_tag (tag_name) @name)
+		] @symbol
+	`,
 }
 
 func ExtractSymbol(filePath, symbolName, langName string) (*SymbolInfo, error) {
@@ -304,6 +318,9 @@ var symbolTypeAliases = map[string]string{
 	"enum":      "enum",
 	"trait":     "trait",
 	"impl":      "impl",
+	"element":   "element",
+	"script":    "script",
+	"style":     "style",
 }
 
 func normalizeSymbolType(symbolType string) (string, error) {
@@ -385,6 +402,12 @@ func mapNodeTypeToSymbolType(nodeType string) string {
 		return "trait"
 	case "impl_item":
 		return "impl"
+	case "element", "self_closing_tag":
+		return "element"
+	case "script_element":
+		return "script"
+	case "style_element":
+		return "style"
 	default:
 		return ""
 	}
