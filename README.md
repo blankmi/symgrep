@@ -2,6 +2,9 @@
 
 `symgrep` is a high-precision code symbol extraction tool built for LLM agents and developers. Unlike standard `grep` which operates on text, `symgrep` uses **Tree-sitter** to parse source code into an Abstract Syntax Tree (AST), allowing it to extract exact functions, classes, methods, and structs with zero noise.
 
+> **Benchmark note:** A/B testing across 88 agent invocations on codebases up to 250K LOC (Haiku 4.5, Sonnet 4.6) showed that current models already use Grep efficiently for symbol *search* — instructing agents to use symgrep for finding classes or listing symbols was 75% more expensive than plain Grep. 
+> Where symgrep provides real value is **extraction**: pulling a single method from a large file (200+ lines) avoids reading hundreds of irrelevant lines. Position symgrep as a read-reduction tool, not a search replacement.
+
 ## Features
 
 - **Precision Extraction**: Extract symbols by name (e.g., `MyFunction`, `UserDataStruct`) without capturing unrelated text.
@@ -149,12 +152,10 @@ To make an agent reliably use `symgrep`, add the following instruction to the ag
 | Codex       | `AGENTS.md` or `AGENTS.override.md`  |
 
 ```markdown
-Use `symgrep` for symbol discovery and definition extraction. Never start with grep, glob, or full-file reads for symbol lookup when `symgrep` is available.
-1. Run `symgrep list -f <file> -s <symbol>` when the file is already known.
-2. Run `symgrep list -f <directory> -s <symbol>` when the symbol location is unknown and you need to search across files.
-3. Run `symgrep extract -f <file> -s <symbol>` after discovery to retrieve the exact definition.
-4. Prefer `--format=json` when line numbers, byte offsets, or machine-readable output are useful.
-5. Fall back to grep/find only for exact text, file/path discovery, comments, TODOs, log messages, or unsupported files. Read full files only when editing, checking nearby context after extraction, or when `symgrep` cannot answer the question.
+Use `symgrep extract` to read specific symbols from large files (200+ lines) instead of reading the entire file.
+- Use `Grep` for all search: finding identifiers, patterns, references, class names.
+- Use `symgrep extract -f <file> -s <symbol>` when you already found the file via Grep and need one method/class from a large file.
+- Use `Read` when the file is short (<200 lines) or you need the full file context.
 ```
 
 > [!NOTE]
@@ -168,25 +169,21 @@ Ask the agent something like:
 
 ### Use `symgrep` together with `codesight`
 
-For maximum token efficiency, combine `symgrep` for surgical symbol extraction with [codesight](https://github.com/blankmi/codesight) for semantic discovery.
-
-Include this **Master Search Strategy** in your agent's project-level configuration (`GEMINI.md`, `CLAUDE.md`, `AGENTS.md`, etc.):
+Combine [codesight](https://github.com/blankmi/codesight) (`cs search`) for semantic discovery with `symgrep extract` for surgical code reading. Add to your agent's project config (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`):
 
 ```markdown
-# Master Search Strategy
-1. **Semantic Discovery:** For any inquiry about behavior or logic ("How...", "Where is..."), **ALWAYS** start with `cs search "<query>"`.
-2. **Symbol Mapping:** Once a relevant file is found, use `symgrep list -f <path>` to identify relevant functions, classes, or methods.
-3. **Surgical Extraction:** Use `symgrep extract -f <path> -s <symbol>` to retrieve code. Avoid `read_file` for structural elements.
-4. **Lexical Fallback:** Use `grep` only for exact strings (logs, constants, TODOs) or if semantic search is unsuccessful.
+# Tool Selection
 
-# Search Guardrails
-- **NEVER** start with `grep` for "How", "Where", or "Why". Use `cs search`.
-- **NEVER** use `read_file` for structural elements if `symgrep` is available.
-- **NEVER** assume `grep` is more efficient than `cs` for codebase mapping.
+- Search → Grep. Always start here for text, identifiers, patterns, class names.
+- Understand → cs search "<query>" via Bash. Use for conceptual questions when you don't know which files matter.
+- Extract → symgrep extract -f <file> -s <symbol> via Bash. Use instead of Read when you need one symbol from a file >200 lines.
+- Find files → Glob.
 
-# The Golden Path
-`cs search` (locate file) → `symgrep list` (locate symbol) → `symgrep extract` (read code)
+Do NOT use cs search for exact-match lookups.
+Do NOT read 5+ files to understand a feature — cs search ranks them for you.
 ```
+
+> **Why this works:** Benchmarking on a 250K LOC codebase showed that `cs search` saves 14.5% on conceptual queries by surfacing relevant files from the semantic index, while Grep handles all pattern-based search optimally. `symgrep extract` is reserved for its one strength: reading less from large files. Verbose instructions with more rules performed worse — 7 lines outperformed 29 lines by 15 percentage points.
 
 ### Allowlisting `symgrep` for autonomous use
 
