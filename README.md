@@ -166,6 +166,28 @@ Ask the agent something like:
 - Show me the UserService.login method.
 - Find the Config struct used by the CLI.
 
+### Use `symgrep` together with `codesight`
+
+For maximum token efficiency, combine `symgrep` for surgical symbol extraction with [codesight](https://github.com/blankmi/codesight) for semantic discovery.
+
+Include this **Master Search Strategy** in your agent's project-level configuration (`GEMINI.md`, `CLAUDE.md`, `AGENTS.md`, etc.):
+
+```markdown
+# Master Search Strategy
+1. **Semantic Discovery:** For any inquiry about behavior or logic ("How...", "Where is..."), **ALWAYS** start with `cs search "<query>"`.
+2. **Symbol Mapping:** Once a relevant file is found, use `symgrep list -f <path>` to identify relevant functions, classes, or methods.
+3. **Surgical Extraction:** Use `symgrep extract -f <path> -s <symbol>` to retrieve code. Avoid `read_file` for structural elements.
+4. **Lexical Fallback:** Use `grep` only for exact strings (logs, constants, TODOs) or if semantic search is unsuccessful.
+
+# Search Guardrails
+- **NEVER** start with `grep` for "How", "Where", or "Why". Use `cs search`.
+- **NEVER** use `read_file` for structural elements if `symgrep` is available.
+- **NEVER** assume `grep` is more efficient than `cs` for codebase mapping.
+
+# The Golden Path
+`cs search` (locate file) → `symgrep list` (locate symbol) → `symgrep extract` (read code)
+```
+
 ### Allowlisting `symgrep` for autonomous use
 
 By default, coding agents require user approval before running shell commands. To let an agent use `symgrep` without prompting each time, add it to the agent's permission allowlist.
